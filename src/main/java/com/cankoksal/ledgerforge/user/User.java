@@ -34,5 +34,44 @@ private Instant updatedAt;
 protected User() {
 }
 
+public User(
+    UUID id,
+    String email,
+    String passwordHash,
+    String status,
+    Instant createdAt,
+    Instant updatedAt
+) {
+this.id = id;
+this.email = email;
+this.passwordHash = passwordHash;
+this.status = status;
+this.createdAt = createdAt;
+this.updatedAt = updatedAt;
+}
+
+public UUID getId() {
+    return id;
+}
+
+public String getEmail() {
+    return email;
+}
+
+public String getPasswordHash() {
+    return passwordHash;
+}
+
+public String getStatus() {
+    return status;
+}
+
+public Instant getCreatedAt() {
+    return createdAt;
+}
+
+public Instant getUpdatedAt() {
+    return updatedAt;
+}
 
 }
