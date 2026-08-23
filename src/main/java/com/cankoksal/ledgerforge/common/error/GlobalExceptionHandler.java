@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import com.cankoksal.ledgerforge.auth.EmailAlreadyExistsException;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -60,4 +61,23 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(response);
     }
+@ExceptionHandler(EmailAlreadyExistsException.class)
+public ResponseEntity<ApiErrorResponse> handleEmailAlreadyExistsException(
+        EmailAlreadyExistsException exception,
+        HttpServletRequest request
+) {
+
+    ApiErrorResponse response = new ApiErrorResponse(
+            Instant.now(),
+            HttpStatus.CONFLICT.value(),
+            "EMAIL_ALREADY_EXISTS",
+            exception.getMessage(),
+            request.getRequestURI(),
+            Map.of()
+    );
+
+    return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(response);
+}
 }
