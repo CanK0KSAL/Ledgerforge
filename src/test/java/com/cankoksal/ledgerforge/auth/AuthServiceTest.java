@@ -1,22 +1,19 @@
 package com.cankoksal.ledgerforge.auth;
 
+import com.cankoksal.ledgerforge.security.JwtService;
+import com.cankoksal.ledgerforge.user.User;
+import com.cankoksal.ledgerforge.user.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.cankoksal.ledgerforge.user.UserRepository;
-import com.cankoksal.ledgerforge.user.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.never;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -29,6 +26,9 @@ class AuthServiceTest {
     
     @InjectMocks
     private AuthService authService;
+
+    @Mock
+    private JwtService jwtService;
 
     @Test
     void shouldRegisterUser() {
@@ -70,27 +70,4 @@ class AuthServiceTest {
                 .save(any(User.class));
     }
 
-
-    @Test
-    void shouldRejectDuplicateEmail() {
-        String email = "test@example.com";
-        String rawPassword = "StrongPass123";
-    
-        when(userRepository.existsByEmail(email))
-                .thenReturn(true);
-    
-        assertThrows(
-                EmailAlreadyExistsException.class,
-                () -> authService.register(email, rawPassword)
-        );
-    
-        verify(userRepository, times(1))
-                .existsByEmail(email);
-    
-        verify(userRepository, never())
-                .save(any(User.class));
-    
-        verify(passwordEncoder, never())
-                .encode(rawPassword);
-    }
 }

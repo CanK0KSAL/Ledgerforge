@@ -34,4 +34,39 @@ public class AuthController {
                 .status(HttpStatus.CREATED)
                 .body(response);
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request
+    ) {
+
+        String token = authService.login(
+                request.email(),
+                request.password()
+                // Request'ten email ve password'u alıp AuthService'e gönderiyoruz.
+                // AuthService kullanıcıyı doğruluyor.
+                // Doğruysa JwtService ile token üretiyor.
+                // Geri gelen JWT String burada token değişkenine giriyor.
+        );
+        LoginResponse response = new LoginResponse(
+                token,
+                "Bearer"
+        );
+        // Client'a direkt String vermek yerine LoginResponse oluşturuyoruz.
+        // accessToken = üretilen JWT
+        // tokenType = Bearer
+        //
+        // Sonuç JSON'da kabaca:
+        // {
+        //   "accessToken": "eyJ...",
+        //   "tokenType": "Bearer"
+        // }
+
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(response);
+
+    }
+
 }
