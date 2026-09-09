@@ -4,6 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -31,6 +33,10 @@ private Instant createdAt;
 @Column(name = "updated_at", nullable = false)
 private Instant updatedAt;
 
+@Enumerated(EnumType.STRING)
+@Column(name = "role", nullable = false, length = 20)
+private UserRole role;
+
 protected User() {
 }
 
@@ -40,7 +46,8 @@ public User(
     String passwordHash,
     String status,
     Instant createdAt,
-    Instant updatedAt
+    Instant updatedAt,
+    UserRole role
 ) {
 this.id = id;
 this.email = email;
@@ -48,6 +55,7 @@ this.passwordHash = passwordHash;
 this.status = status;
 this.createdAt = createdAt;
 this.updatedAt = updatedAt;
+this.role = role;
 }
 
 public UUID getId() {
@@ -72,6 +80,9 @@ public Instant getCreatedAt() {
 
 public Instant getUpdatedAt() {
     return updatedAt;
+}
+public UserRole getRole() {
+    return role;
 }
 
 }

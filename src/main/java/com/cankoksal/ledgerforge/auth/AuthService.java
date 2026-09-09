@@ -3,6 +3,7 @@ package com.cankoksal.ledgerforge.auth;
 import com.cankoksal.ledgerforge.security.JwtService;
 import com.cankoksal.ledgerforge.user.User;
 import com.cankoksal.ledgerforge.user.UserRepository;
+import com.cankoksal.ledgerforge.user.UserRole;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,7 +48,8 @@ public class AuthService {
                 encodedPassword,
                 "ACTIVE",
                 now,
-                now
+                now,
+                UserRole.USER
         );
 
         return userRepository.save(user);

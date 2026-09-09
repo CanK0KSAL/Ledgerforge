@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.temporal.ChronoUnit;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,7 +35,8 @@ class UserRepositoryIntegrationTest {
                 "fake-hash-for-test",
                 "ACTIVE",
                 now,
-                now
+                now,
+                UserRole.USER
         );
 
         userRepository.saveAndFlush(user);
@@ -51,5 +52,7 @@ class UserRepositoryIntegrationTest {
         assertEquals(user.getStatus(), foundUser.getStatus());
         assertEquals(user.getCreatedAt(), foundUser.getCreatedAt());
         assertEquals(user.getUpdatedAt(), foundUser.getUpdatedAt());
+        assertEquals(UserRole.USER, foundUser.getRole());
     }
+
 }
