@@ -41,15 +41,38 @@ public class SecurityConfig {
                         "/api/auth/register",
                         "/api/auth/login"
                 ).permitAll() // authentication olmasa da geçebilir.
-                .anyRequest().authenticated()
+                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                 // /api/admin/** endpoint'lerine erişmek için kullanıcının ADMIN rolüne sahip olması gerekir.
+                 .anyRequest().authenticated()
                 // .anyRequest() yukarıda özel olarak söylemediğim geri kalan her şey.
                 // .authenticated() bunlara girmek için SecurityContext'te authenticated kullanıcı bulunmalı.
         );
 
         http.exceptionHandling(exception -> exception
+        // 401 = Authentication problemi → kullanıcı doğrulanmamış.
+        // 403 = Authorization problemi → kullanıcı doğrulanmış ama yetkisi yetersiz.
+
                 .authenticationEntryPoint((request, response, authException) ->
-                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED)
-                )
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED)
+                )  // Authentication yoksa burası çalışır.
+                // Örnek:
+                // protected endpoint'e token olmadan gelmek
+                // veya geçerli Authentication oluşmaması
+                //
+                // Sonuç:
+                // 401 Unauthorized
+                // "Kim olduğunu doğrulayamadım."
+
+                .accessDeniedHandler((request, response, accessDeniedException) ->
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN)
+                ) // Authentication VAR ama gerekli yetki/role YOKSA burası çalışır.
+                // Örnek:
+                // kullanıcı ROLE_USER
+                // endpoint ROLE_ADMIN istiyor
+                //
+                // Sonuç:
+                // 403 Forbidden
+                // "Kim olduğunu biliyorum ama buraya yetkin yok."
         );
 
 

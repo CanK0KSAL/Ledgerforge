@@ -42,6 +42,7 @@ public class JwtService {
 
         return Jwts.builder() // Yeni JWT yapmaya başla
                 .subject(user.getId().toString())// Bu token hangi kullanıcıya ait?
+                .claim("role", user.getRole().name())
                 .issuedAt(Date.from(now)) // Ne zaman üretildi?
                 .expiration(Date.from(expiration)) // Biteceği tarih.
                 .signWith(getSigningKey()) // Bizim gizli anahtarımızla mühürle
@@ -64,6 +65,18 @@ public class JwtService {
 
         return claims.getSubject();// Doğrulanmış token'ın hangi kullanıcıya ait olduğunu döndürüyor.
     }
+
+    public String extractRole(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.get("role", String.class);
+    }
+
+
     public boolean isTokenValid(String token) {
         try {
             extractSubject(token);
