@@ -1,22 +1,23 @@
 package com.cankoksal.ledgerforge.auth;
 
+import com.cankoksal.ledgerforge.security.JwtService;
+import com.cankoksal.ledgerforge.user.User;
+import com.cankoksal.ledgerforge.user.UserRepository;
+import com.cankoksal.ledgerforge.user.UserRole;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.cankoksal.ledgerforge.user.UserRepository;
-import com.cankoksal.ledgerforge.user.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.never;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -29,6 +30,9 @@ class AuthServiceTest {
     
     @InjectMocks
     private AuthService authService;
+
+    @Mock
+    private JwtService jwtService;
 
     @Test
     void shouldRegisterUser() {
@@ -54,6 +58,7 @@ class AuthServiceTest {
         assertEquals(email, result.getEmail());
         assertEquals(encodedPassword, result.getPasswordHash());
         assertEquals("ACTIVE", result.getStatus());
+        assertEquals(UserRole.USER, result.getRole());
     
         assertNotNull(result.getCreatedAt());
         assertNotNull(result.getUpdatedAt());
@@ -69,28 +74,111 @@ class AuthServiceTest {
         verify(userRepository, times(1))
                 .save(any(User.class));
     }
-
-
     @Test
-    void shouldRejectDuplicateEmail() {
+    void shouldLoginSuccessfully() {
+
+        // GIVEN
         String email = "test@example.com";
         String rawPassword = "StrongPass123";
-    
-        when(userRepository.existsByEmail(email))
-                .thenReturn(true);
-    
-        assertThrows(
-                EmailAlreadyExistsException.class,
-                () -> authService.register(email, rawPassword)
+        String storedHash = "encoded-password";
+
+        User user = new User(
+                UUID.randomUUID(),
+                email,
+                storedHash,
+                "ACTIVE",
+                Instant.now(),
+                Instant.now(),
+                UserRole.USER
         );
-    
+
+        when(userRepository.findByEmail(email))
+                .thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(rawPassword, storedHash))
+                .thenReturn(true);
+
+        when(jwtService.generateToken(user))
+                .thenReturn("test-token");
+
+        // WHEN
+        String result = authService.login(email, rawPassword);
+
+        // THEN
+        assertEquals("test-token", result);
+
         verify(userRepository, times(1))
-                .existsByEmail(email);
-    
-        verify(userRepository, never())
-                .save(any(User.class));
-    
+                .findByEmail(email);
+
+        verify(passwordEncoder, times(1))
+                .matches(rawPassword, storedHash);
+
+        verify(jwtService, times(1))
+                .generateToken(user);
+    }
+    @Test
+    void shouldThrowWhenEmailDoesNotExist() {
+
+        // GIVEN
+        String email = "missing@example.com";
+        String rawPassword = "StrongPass123";
+
+        when(userRepository.findByEmail(email))
+                .thenReturn(Optional.empty());
+
+        // WHEN + THEN
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> authService.login(email, rawPassword)
+        );
+
+        verify(userRepository, times(1))
+                .findByEmail(email);
+
         verify(passwordEncoder, never())
-                .encode(rawPassword);
+                .matches(anyString(), anyString());
+
+        verify(jwtService, never())
+                .generateToken(any(User.class));
+    }
+
+    @Test
+    void shouldThrowWhenPasswordIsWrong() {
+
+        // GIVEN
+        String email = "test@example.com";
+        String rawPassword = "WrongPassword";
+        String storedHash = "encoded-password";
+
+        User user = new User(
+                UUID.randomUUID(),
+                email,
+                storedHash,
+                "ACTIVE",
+                Instant.now(),
+                Instant.now(),
+                UserRole.USER
+        );
+
+        when(userRepository.findByEmail(email))
+                .thenReturn(Optional.of(user));
+
+        when(passwordEncoder.matches(rawPassword, storedHash))
+                .thenReturn(false);
+
+        // WHEN + THEN
+        assertThrows(
+                InvalidCredentialsException.class,
+                () -> authService.login(email, rawPassword)
+        );
+
+        verify(userRepository, times(1))
+                .findByEmail(email);
+
+        verify(passwordEncoder, times(1))
+                .matches(rawPassword, storedHash);
+
+        verify(jwtService, never())
+                .generateToken(any(User.class));
     }
 }
