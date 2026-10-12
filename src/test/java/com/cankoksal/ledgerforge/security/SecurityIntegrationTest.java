@@ -136,12 +136,23 @@ class SecurityIntegrationTest {
 
         String token = createToken(UserRole.USER);
 
-        // Token'ın signature kısmını bozuyoruz.
-        // Böylece JwtService doğrulamayı geçememeli.
+        // JWT = header.payload.signature
+        // Signature bölümünün ilk karakterini değiştiriyoruz.
+        // Böylece signature gerçekten bozulmuş oluyor ve
+        // JwtService token'ı doğrulamamalı.
+
+        String[] parts = token.split("\\.");
+
+        String signature = parts[2];
+
+        char changedFirstCharacter =
+                signature.charAt(0) == 'A' ? 'B' : 'A';
+
+        String tamperedSignature =
+                changedFirstCharacter + signature.substring(1);
 
         String tamperedToken =
-                token.substring(0, token.length() - 1)
-                        + (token.endsWith("a") ? "b" : "a");
+                parts[0] + "." + parts[1] + "." + tamperedSignature;
 
         mockMvc.perform(
                         get("/actuator/health")
